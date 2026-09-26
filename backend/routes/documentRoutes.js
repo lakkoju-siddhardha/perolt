@@ -2,8 +2,11 @@
 const {
     createDocument,
     createChunk,
-    getDocuments
+    getDocuments,
+    getDocumentByHash
 } = require("../models/documentModel");
+const fs = require("fs");
+const crypto = require("crypto");
 const express = require("express");
 const multer = require("multer");
 
@@ -53,13 +56,39 @@ router.post("/upload", upload.single("document"), async (req, res) => {
             });
         }
 
-        const result = await extractText(req.file.path);
-        const chunks = chunkText(result.text);
+        const fileBuffer = fs.readFileSync(req.file.path);
+
+const fileHash = crypto
+    .createHash("sha256")
+    .update(fileBuffer)
+    .digest("hex");
+
+const existingDocument = await getDocumentByHash(fileHash);
+
+if (existingDocument) {
+
+    fs.unlinkSync(req.file.path);
+
+    return res.status(409).json({
+        success: false,
+        duplicate: true,
+        message: "This document has already been uploaded.",
+        document: {
+            id: existingDocument.id,
+            name: existingDocument.filename,
+            pages: existingDocument.total_pages
+        }
+    });
+}
+
+const result = await extractText(req.file.path);
+const chunks = chunkText(result.text);
 
         const document = await createDocument(
     req.file.originalname,
     req.file.size,
-    result.pages
+    result.pages,
+    fileHash
 );
 
 for (let i = 0; i < chunks.length; i++) {
