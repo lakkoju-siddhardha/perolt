@@ -1,0 +1,40 @@
+.ask-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 96px);
+  gap: 18px;
+}
+
+.ask-page__title {
+  font-size: 26px;
+}
+
+.ask-page__subtitle {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.ask-page__notice {
+  font-size: 13px;
+  color: var(--accent-strong);
+  background: rgba(227, 177, 82, 0.08);
+  border: 1px solid rgba(227, 177, 82, 0.2);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+}
+
+.ask-page__notice a {
+  text-decoration: underline;
+}
+
+.ask-page__window {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .ask-page {
+    height: calc(100vh - 156px);
+  }
+}

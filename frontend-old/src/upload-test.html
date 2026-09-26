@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KnowVault PDF Upload</title>
+</head>
+
+<body>
+
+    <h1>KnowVault</h1>
+    <h2>Upload PDF</h2>
+
+    <input type="file" id="pdfFile" accept=".pdf">
+
+    <button onclick="uploadPDF()">
+        Upload PDF
+    </button>
+
+    <h3>Result</h3>
+
+    <pre id="result"></pre>
+
+    <script>
+        async function uploadPDF() {
+
+            const fileInput = document.getElementById("pdfFile");
+            const result = document.getElementById("result");
+
+            if (!fileInput.files.length) {
+                result.textContent = "Please select a PDF.";
+                return;
+            }
+
+            const formData = new FormData();
+
+            formData.append(
+                "document",
+                fileInput.files[0]
+            );
+
+            result.textContent = "Uploading...";
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:5000/api/documents/upload",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+                const data = await response.json();
+
+                result.textContent =
+                    JSON.stringify(data, null, 2);
+
+            } catch (error) {
+
+                result.textContent =
+                    "Error: " + error.message;
+            }
+        }
+    </script>
+
+</body>
+</html>

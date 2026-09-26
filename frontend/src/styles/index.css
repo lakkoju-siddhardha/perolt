@@ -1,0 +1,214 @@
+/* ==========================================================
+   PEROLT — design tokens
+   A document/marginalia motif: deep charcoal ground, a
+   literary serif for headings, a warm "highlighter" gold as
+   the single accent (found answers, underlined evidence),
+   with a quiet teal for secondary/confirming states.
+   ========================================================== */
+
+:root {
+  /* color: ground */
+  --bg: #0B0D10;
+  --bg-soft: #0E1114;
+  --surface: #14171B;
+  --surface-raised: #1B1F24;
+  --surface-hover: #20242A;
+  --border: #262B31;
+  --border-subtle: #1D2126;
+
+  /* color: text */
+  --text-primary: #ECEDEE;
+  --text-secondary: #97A0AA;
+  --text-tertiary: #5B636D;
+
+  /* color: accent (gold — "highlighted" findings) */
+  --accent: #E3B152;
+  --accent-strong: #F0C674;
+  --accent-ink: #241B08;
+
+  /* color: secondary accent (teal — confirmation / links) */
+  --teal: #5FB8AC;
+  --teal-soft: rgba(95, 184, 172, 0.14);
+
+  --danger: #DD6E62;
+  --danger-soft: rgba(221, 110, 98, 0.12);
+
+  /* type */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', Menlo, monospace;
+
+  /* radius */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+
+  /* shadow */
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -16px rgba(0, 0, 0, 0.55);
+
+  /* layout */
+  --sidebar-w: 248px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(1200px 500px at 85% -10%, rgba(227, 177, 82, 0.05), transparent 60%);
+  background-attachment: fixed;
+}
+
+#root {
+  min-height: 100%;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, textarea {
+  font-family: inherit;
+}
+
+::selection {
+  background: rgba(227, 177, 82, 0.28);
+  color: var(--text-primary);
+}
+
+/* focus visibility, kept everywhere per accessibility floor */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--r-pill);
+  border: 2px solid var(--bg);
+}
+
+/* shared: pill status/meta tag */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  background: var(--surface);
+}
+
+.tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.tag--ready { color: var(--teal); border-color: rgba(95, 184, 172, 0.3); background: var(--teal-soft); }
+.tag--processing { color: var(--accent); border-color: rgba(227, 177, 82, 0.3); background: rgba(227, 177, 82, 0.1); }
+.tag--error { color: var(--danger); border-color: rgba(221, 110, 98, 0.3); background: var(--danger-soft); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn--primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn--primary:hover {
+  background: var(--accent-strong);
+}
+.btn--primary:disabled {
+  background: var(--surface-hover);
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+}
+.btn--ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+.btn--ghost:hover {
+  background: var(--surface-hover);
+  border-color: var(--border);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+}
+
+.scroll-fade {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

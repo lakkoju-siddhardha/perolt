@@ -1,0 +1,122 @@
+.upload-zone {
+  position: relative;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: 48px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  min-height: 220px;
+}
+
+.upload-zone--dragging {
+  border-color: var(--accent);
+  background: var(--surface-raised);
+}
+
+.upload-zone--success {
+  border-style: solid;
+  border-color: rgba(95, 184, 172, 0.35);
+}
+
+.upload-zone--error {
+  border-style: solid;
+  border-color: rgba(221, 110, 98, 0.4);
+}
+
+.upload-zone__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-zone--success .upload-zone__input,
+.upload-zone--error .upload-zone__input,
+.upload-zone--uploading .upload-zone__input {
+  pointer-events: none;
+}
+
+.upload-zone__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  max-width: 340px;
+}
+
+.upload-zone__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.upload-zone__icon--active {
+  color: var(--accent);
+}
+
+.upload-zone__icon--success {
+  color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.upload-zone__icon--error {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.upload-zone__title {
+  font-size: 17px;
+  word-break: break-word;
+}
+
+.upload-zone__hint {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.upload-zone__hint--success {
+  color: var(--teal);
+}
+
+.upload-zone__hint--error {
+  color: var(--danger);
+}
+
+.upload-zone__progress {
+  width: 100%;
+  max-width: 260px;
+  margin: 10px 0 4px;
+  pointer-events: none;
+}
+.upload-zone__filename {
+  margin: 4px 0 14px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  max-width: 80%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-zone__processing {
+  margin: 18px 0 8px;
+}
+
+.upload-zone--processing {
+  border-color: rgba(227, 177, 82, 0.35);
+}
+
+.upload-zone__hint--success {
+  margin-bottom: 16px;
+}

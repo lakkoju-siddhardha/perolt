@@ -1,0 +1,141 @@
+.source-card {
+  padding: 16px;
+  min-width: 0;
+}
+
+/* Header */
+
+.source-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.source-card__index {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-strong);
+  background: rgba(227, 177, 82, 0.1);
+  border: 1px solid rgba(227, 177, 82, 0.22);
+  border-radius: 6px;
+  padding: 3px 7px;
+  flex-shrink: 0;
+}
+
+/* Document information */
+
+.source-card__ids {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.source-card__filename {
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+
+  overflow: hidden;
+  word-break: break-word;
+} 
+
+.source-card__chunk {
+  color: var(--text-tertiary);
+  font-size: 11.5px;
+}
+
+/* Similarity */
+
+.source-card__match {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding-left: 46px;
+}
+
+.source-card__match-bar {
+  width: 42px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  overflow: hidden;
+  display: inline-block;
+}
+
+.source-card__match-bar span {
+  display: block;
+  height: 100%;
+  background: var(--teal);
+  border-radius: var(--r-pill);
+  transition: width 0.3s ease;
+}
+
+.source-card__match-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  min-width: 28px;
+}
+.source-card__match-label {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.02em;
+}
+/* Source preview */
+
+.source-card__snippet {
+  margin: 12px 0 0;
+
+  font-size: 12.5px;
+  line-height: 1.6;
+
+  color: var(--text-secondary);
+  font-style: italic;
+
+  border-left: 2px solid var(--border);
+  padding-left: 10px;
+
+  /* Keep source cards compact */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+}
+
+/* Mobile */
+
+@media (max-width: 700px) {
+
+  .source-card {
+    padding: 14px;
+  }
+
+  .source-card__head {
+    gap: 8px;
+  }
+
+  .source-card__match {
+    gap: 5px;
+     padding-left: 38px;
+  }
+
+  .source-card__match-bar {
+    width: 32px;
+  }
+
+  .source-card__filename {
+    max-width: 180px;
+  }
+
+}
