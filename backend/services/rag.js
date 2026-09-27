@@ -1,7 +1,8 @@
 const { searchSimilarChunks } = require("./search");
 const {
     getDocuments,
-    getDocumentChunks
+    getDocumentChunks,
+    getDocumentSummary
 } = require("../models/documentModel");
 
 function findMentionedDocument(question, documents) {
@@ -73,12 +74,13 @@ async function callOllama(prompt, numPredict = 500) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                model: "qwen3.5:4b",
-                prompt,
-                stream: false,
-                think: false,
-                options: {
+           body: JSON.stringify({
+    model: "qwen3.5:4b",
+    prompt,
+    stream: false,
+    think: false,
+    keep_alive: "10m",
+    options: {
                     temperature: 0.2,
                     num_predict: numPredict
                 }
@@ -250,11 +252,26 @@ if (documents.length === 1) {
 }
 
 
-        const chunks = await getDocumentChunks(
-            document.id
-        );
+     const storedSummary = await getDocumentSummary(document.id);
 
-        if (chunks.length === 0) {
+if (
+    storedSummary &&
+    storedSummary.summary_status === "completed" &&
+    storedSummary.summary
+) {
+    console.log("⚡ Returning stored summary from PostgreSQL");
+
+    return {
+        answer: storedSummary.summary,
+        sources: []
+    };
+}
+
+console.log("🤖 Generating summary with Ollama...");
+
+const chunks = await getDocumentChunks(document.id);
+
+if (chunks.length === 0) {
             return {
                 answer:
                     "I found the document, but it does not contain any processed text yet.",
@@ -285,7 +302,7 @@ if (documents.length === 1) {
 
     const chunks = await searchSimilarChunks(
         question,
-        intent === "explain" ? 8 : 5
+        intent === "explain" ? 6 : 4
     );
 
     if (chunks.length === 0) {
@@ -395,10 +412,14 @@ ANSWER:
 `;
     }
 
-    const answer = await callOllama(
-        prompt,
-        intent === "explain" ? 800 : 500
-    );
+    console.time("⏱️ Ollama answer");
+
+const answer = await callOllama(
+    prompt,
+    intent === "explain" ? 450 : 250
+);
+
+console.timeEnd("⏱️ Ollama answer");
 
     return {
         answer,
@@ -414,5 +435,6 @@ ANSWER:
 
 module.exports = {
     answerQuestion,
-    detectIntent
+    detectIntent,
+    summarizeDocument
 };

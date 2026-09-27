@@ -3,7 +3,8 @@ const {
     createDocument,
     createChunk,
     getDocuments,
-    getDocumentByHash
+    getDocumentByHash,
+    updateDocumentSummary
 } = require("../models/documentModel");
 const fs = require("fs");
 const crypto = require("crypto");
@@ -12,7 +13,10 @@ const multer = require("multer");
 
 const { extractText } = require("../services/documentParser");
 const { chunkText } = require("../services/chunker");
-const { answerQuestion } = require("../services/rag");
+const {
+    answerQuestion,
+    summarizeDocument
+} = require("../services/rag");
 const { generateEmbedding } = require("../services/embeddings");
 
 const router = express.Router();
@@ -111,10 +115,17 @@ for (let i = 0; i < chunks.length; i++) {
     );
 }
 
-       res.json({
+    await updateDocumentSummary(
+    document.id,
+    null,
+    "generating"
+);
+
+res.json({
     success: true,
 
     document: {
+        id: document.id,
         name: req.file.originalname,
         size: req.file.size,
         pages: result.pages
@@ -122,7 +133,55 @@ for (let i = 0; i < chunks.length; i++) {
 
     totalChunks: chunks.length,
 
-    chunks: chunks.slice(0, 5)
+    chunks: chunks.slice(0, 5),
+
+    summaryStatus: "generating"
+});
+
+// Generate the document summary in the background.
+// The upload response has already been sent to the frontend.
+setImmediate(async () => {
+    try {
+        console.log(
+            `Generating summary for document ${document.id}...`
+        );
+
+        const summary = await summarizeDocument(
+            document,
+            chunks
+        );
+
+        await updateDocumentSummary(
+            document.id,
+            summary,
+            "completed"
+        );
+
+        console.log(
+            `✅ Summary generated for document ${document.id}`
+        );
+
+    } catch (error) {
+
+        console.error(
+            `❌ Summary generation failed for document ${document.id}:`
+        );
+
+        console.error(error);
+
+        try {
+            await updateDocumentSummary(
+                document.id,
+                null,
+                "failed"
+            );
+        } catch (updateError) {
+            console.error(
+                "Failed to update summary status:",
+                updateError
+            );
+        }
+    }
 });
 
     } catch (error) {

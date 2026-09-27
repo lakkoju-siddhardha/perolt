@@ -53,17 +53,22 @@ function removeDuplicateChunks(chunks, limit) {
             break;
         }
     }
-
+console.timeEnd("⏱️ PostgreSQL search");
     return selected;
+    
 }
 
 async function searchSimilarChunks(query, limit = 5) {
-    const queryEmbedding = await generateEmbedding(query);
+    console.time("⏱️ Query embedding");
+
+const queryEmbedding = await generateEmbedding(query);
+
+console.timeEnd("⏱️ Query embedding");
 
     const vector = `[${queryEmbedding.join(",")}]`;
 
     const candidateLimit = Math.max(limit * 3, 15);
-
+ console.time("⏱️ PostgreSQL search");
     const result = await pool.query(
         `
         SELECT
