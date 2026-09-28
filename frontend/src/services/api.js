@@ -67,13 +67,16 @@ export function uploadDocument(file, onProgress) {
  * @param {string} question
  * @returns {Promise<{success: boolean, question: string, answer: string, sources: Array}>}
  */
-export async function askQuestion(question) {
+export async function askQuestion(question, conversation = []) {
   let response;
   try {
     response = await fetch(`${API_BASE}/documents/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question })
+      body: JSON.stringify({
+  question,
+  conversation
+})
     });
   } catch {
     throw new Error('Could not reach the Perolt server. Is the backend running?');

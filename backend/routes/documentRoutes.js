@@ -199,7 +199,10 @@ router.post("/ask", async (req, res) => {
 
     try {
 
-        const { question } = req.body;
+       const {
+    question,
+    conversation = []
+} = req.body;
 
         if (!question || question.trim() === "") {
             return res.status(400).json({
@@ -208,7 +211,10 @@ router.post("/ask", async (req, res) => {
             });
         }
 
-        const result = await answerQuestion(question);
+        const result = await answerQuestion(
+    question,
+    conversation
+);
 
         res.json({
             success: true,

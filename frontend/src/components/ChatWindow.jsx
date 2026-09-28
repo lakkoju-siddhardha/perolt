@@ -104,12 +104,22 @@ export default function ChatWindow() {
     setBusy(true);
 
 
-    try {
+ try {
 
-      const result = await askQuestion(question);
+  const conversation = messages
+    .filter((message) => !message.pending && !message.error)
+    .map((message) => ({
+      role: message.role,
+      content: message.content
+    }));
+
+  const result = await askQuestion(
+    question,
+    conversation
+  );
 
 
-      setMessages((prev) =>
+  setMessages((prev) =>
         prev.map((message) =>
 
           message.id === pendingMsg.id

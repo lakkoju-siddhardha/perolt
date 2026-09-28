@@ -1,19 +1,28 @@
 const { searchSimilarChunks } = require("./search");
+
 const {
     getDocuments,
     getDocumentChunks,
     getDocumentSummary
 } = require("../models/documentModel");
 
+
+// --------------------------------------------------
+// FIND DOCUMENT MENTIONED IN QUESTION
+// --------------------------------------------------
+
 function findMentionedDocument(question, documents) {
+
     const questionText = question.toLowerCase();
 
     const matches = documents
         .map((document) => {
-            const filename = document.filename.toLowerCase();
 
-            const filenameWithoutExtension = filename
-                .replace(/\.[^/.]+$/, "");
+            const filename =
+                document.filename.toLowerCase();
+
+            const filenameWithoutExtension =
+                filename.replace(/\.[^/.]+$/, "");
 
             const words = filenameWithoutExtension
                 .split(/[\s_-]+/)
@@ -36,9 +45,18 @@ function findMentionedDocument(question, documents) {
         : null;
 }
 
-function detectIntent(question) {
-    const text = question.toLowerCase().trim();
 
+// --------------------------------------------------
+// DETECT USER INTENT
+// --------------------------------------------------
+
+function detectIntent(question) {
+
+    const text =
+        question.toLowerCase().trim();
+
+
+    // Whole document summary
     if (
         /summari[sz]e|summary|overview|key points|main points|important points|whole document|entire document/i.test(
             text
@@ -47,6 +65,8 @@ function detectIntent(question) {
         return "summary";
     }
 
+
+    // Detailed explanation
     if (
         /explain more|explain further|more detail|in detail|elaborate|expand|give more information|tell me more/i.test(
             text
@@ -55,6 +75,8 @@ function detectIntent(question) {
         return "explain";
     }
 
+
+    // Outside/general knowledge
     if (
         /outside the document|outside document|general knowledge|using general knowledge|not from the document|external knowledge/i.test(
             text
@@ -63,24 +85,58 @@ function detectIntent(question) {
         return "outside";
     }
 
+
     return "question";
 }
 
-async function callOllama(prompt, numPredict = 500) {
+
+// --------------------------------------------------
+// FOLLOW-UP QUESTION DETECTION
+// --------------------------------------------------
+
+function isFollowUpQuestion(question) {
+
+    const text =
+        question.trim();
+
+
+    return /^(explain more|explain further|tell me more|more detail|more details|in more detail|elaborate|expand|give me more information|tell me more about it|what about it|what about this|explain this|explain that|this topic|that topic|give me.*example.*(it|this|that)|give.*example.*(it|this|that)|what are its|what is its|why is it|how does it|how is it|how can it|what are the advantages|what are the disadvantages|what is the importance|why is this important)/i.test(
+        text
+    );
+}
+
+
+// --------------------------------------------------
+// OLLAMA
+// --------------------------------------------------
+
+async function callOllama(
+    prompt,
+    numPredict = 500
+) {
+
     const response = await fetch(
         "http://127.0.0.1:11434/api/generate",
         {
             method: "POST",
+
             headers: {
                 "Content-Type": "application/json"
             },
-           body: JSON.stringify({
-    model: "qwen3.5:4b",
-    prompt,
-    stream: false,
-    think: false,
-    keep_alive: "10m",
-    options: {
+
+            body: JSON.stringify({
+
+                model: "qwen3.5:4b",
+
+                prompt,
+
+                stream: false,
+
+                think: false,
+
+                keep_alive: "10m",
+
+                options: {
                     temperature: 0.2,
                     num_predict: numPredict
                 }
@@ -88,33 +144,58 @@ async function callOllama(prompt, numPredict = 500) {
         }
     );
 
+
     if (!response.ok) {
+
         throw new Error(
             `Ollama returned HTTP ${response.status}`
         );
     }
 
-    const data = await response.json();
+
+    const data =
+        await response.json();
+
 
     return data.response;
 }
 
-async function summarizeDocument(document, chunks) {
+
+// --------------------------------------------------
+// DOCUMENT SUMMARY
+// --------------------------------------------------
+
+async function summarizeDocument(
+    document,
+    chunks
+) {
+
     const BATCH_SIZE = 16;
+
     const batchSummaries = [];
 
-    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-        const batch = chunks.slice(
-            i,
-            i + BATCH_SIZE
-        );
 
-        const context = batch
-            .map(
-                (chunk) =>
-                    `CHUNK ${chunk.chunk_index}:\n${chunk.content}`
-            )
-            .join("\n\n");
+    for (
+        let i = 0;
+        i < chunks.length;
+        i += BATCH_SIZE
+    ) {
+
+        const batch =
+            chunks.slice(
+                i,
+                i + BATCH_SIZE
+            );
+
+
+        const context =
+            batch
+                .map(
+                    (chunk) =>
+                        `CHUNK ${chunk.chunk_index}:\n${chunk.content}`
+                )
+                .join("\n\n");
+
 
         console.log(
             `Summarizing ${i + 1}-${Math.min(
@@ -123,8 +204,10 @@ async function summarizeDocument(document, chunks) {
             )} of ${chunks.length} chunks`
         );
 
-        const summary = await callOllama(
-            `
+
+        const summary =
+            await callOllama(
+                `
 You are Perolt, a document summarization assistant.
 
 Summarize ONLY the information contained in the
@@ -145,6 +228,7 @@ Write a useful study-oriented summary.
 Do not make it extremely short.
 
 DOCUMENT:
+
 ${document.filename}
 
 PASSAGES:
@@ -153,27 +237,33 @@ ${context}
 
 SUMMARY:
 `,
-            500
-        );
+                500
+            );
+
 
         batchSummaries.push(summary);
     }
 
-    const combinedSummaries = batchSummaries
-        .map(
-            (summary, index) =>
-                `SECTION SUMMARY ${index + 1}:\n${summary}`
-        )
-        .join("\n\n");
 
-    const finalSummary = await callOllama(
-        `
+    const combinedSummaries =
+        batchSummaries
+            .map(
+                (summary, index) =>
+                    `SECTION SUMMARY ${index + 1}:\n${summary}`
+            )
+            .join("\n\n");
+
+
+    const finalSummary =
+        await callOllama(
+            `
 You are Perolt.
 
 Create a complete, well-structured summary of the
 document using the section summaries below.
 
 Document:
+
 ${document.filename}
 
 Your final answer should:
@@ -197,137 +287,293 @@ ${combinedSummaries}
 
 FINAL SUMMARY:
 `,
-        1200
-    );
+            1200
+        );
+
 
     return finalSummary;
 }
 
-async function answerQuestion(question) {
-    const intent = detectIntent(question);
 
-    console.log(`RAG intent: ${intent}`);
+// --------------------------------------------------
+// ANSWER QUESTION
+// --------------------------------------------------
+
+async function answerQuestion(
+    question,
+    conversation = []
+) {
+
+    const intent =
+        detectIntent(question);
+
+
+    console.log(
+        `RAG intent: ${intent}`
+    );
+
+
+    // --------------------------------------------------
+    // RESOLVE CONVERSATIONAL FOLLOW-UP
+    // --------------------------------------------------
+
+    let effectiveQuestion =
+        question;
+
+
+    const isFollowUp =
+        isFollowUpQuestion(question);
+
+
+    if (
+        isFollowUp &&
+        conversation.length > 0
+    ) {
+
+        const previousUserMessage =
+            [...conversation]
+                .reverse()
+                .find((message) => {
+
+                    if (
+                        message.role !== "user"
+                    ) {
+                        return false;
+                    }
+
+
+                    const previousQuestion =
+                        message.content.trim();
+
+
+                    // Skip previous follow-up questions.
+                    // We want the original meaningful topic.
+                    return !isFollowUpQuestion(
+                        previousQuestion
+                    );
+                });
+
+
+        if (previousUserMessage) {
+
+            effectiveQuestion =
+                `${previousUserMessage.content}
+
+Follow-up request:
+${question}`;
+
+
+            console.log(
+                `🧠 Follow-up resolved using previous topic: ${previousUserMessage.content}`
+            );
+        }
+    }
+
 
     // --------------------------------------------------
     // WHOLE DOCUMENT SUMMARY
     // --------------------------------------------------
 
     if (intent === "summary") {
-        const documents = await getDocuments();
+
+        const documents =
+            await getDocuments();
+
 
         if (documents.length === 0) {
+
             return {
                 answer:
                     "I don't have any uploaded documents to summarize.",
+
                 sources: []
             };
         }
 
-       
 
-  let document;
-
-if (documents.length === 1) {
-    document = documents[0];
-} else {
-    const mentionedDocument = findMentionedDocument(
-        question,
-        documents
-    );
-
-    if (!mentionedDocument) {
-        return {
-            answer:
-                "I found multiple documents. Please mention the document name you want me to use.",
-            sources: documents.map((document) => ({
-                documentId: document.id,
-                filename: document.filename,
-                similarity: null,
-                content: ""
-            }))
-        };
-    }
-
-    document = mentionedDocument;
-}
+        let document;
 
 
-     const storedSummary = await getDocumentSummary(document.id);
+        if (documents.length === 1) {
 
-if (
-    storedSummary &&
-    storedSummary.summary_status === "completed" &&
-    storedSummary.summary
-) {
-    console.log("⚡ Returning stored summary from PostgreSQL");
+            document =
+                documents[0];
 
-    return {
-        answer: storedSummary.summary,
-        sources: []
-    };
-}
+        } else {
 
-console.log("🤖 Generating summary with Ollama...");
+            const mentionedDocument =
+                findMentionedDocument(
+                    question,
+                    documents
+                );
 
-const chunks = await getDocumentChunks(document.id);
 
-if (chunks.length === 0) {
+            if (!mentionedDocument) {
+
+                return {
+                    answer:
+                        "I found multiple documents. Please mention the document name you want me to use.",
+
+                    sources:
+                        documents.map(
+                            (document) => ({
+                                documentId:
+                                    document.id,
+
+                                filename:
+                                    document.filename,
+
+                                similarity:
+                                    null,
+
+                                content:
+                                    ""
+                            })
+                        )
+                };
+            }
+
+
+            document =
+                mentionedDocument;
+        }
+
+
+        // Check stored summary first.
+        const storedSummary =
+            await getDocumentSummary(
+                document.id
+            );
+
+
+        if (
+            storedSummary &&
+            storedSummary.summary_status ===
+                "completed" &&
+            storedSummary.summary
+        ) {
+
+            console.log(
+                "⚡ Returning stored summary from PostgreSQL"
+            );
+
+
+            return {
+                answer:
+                    storedSummary.summary,
+
+                sources: []
+            };
+        }
+
+
+        console.log(
+            "🤖 Generating summary with Ollama..."
+        );
+
+
+        const chunks =
+            await getDocumentChunks(
+                document.id
+            );
+
+
+        if (chunks.length === 0) {
+
             return {
                 answer:
                     "I found the document, but it does not contain any processed text yet.",
+
                 sources: []
             };
         }
 
-        const answer = await summarizeDocument(
-            document,
-            chunks
-        );
+
+        const answer =
+            await summarizeDocument(
+                document,
+                chunks
+            );
+
 
         return {
             answer,
-            sources: chunks.slice(0, 5).map((chunk) => ({
-                chunkId: chunk.id,
-                documentId: chunk.document_id,
-                filename: document.filename,
-                similarity: null,
-                content: chunk.content
-            }))
+
+            sources:
+                chunks
+                    .slice(0, 5)
+                    .map((chunk) => ({
+                        chunkId:
+                            chunk.id,
+
+                        documentId:
+                            chunk.document_id,
+
+                        filename:
+                            document.filename,
+
+                        similarity:
+                            null,
+
+                        content:
+                            chunk.content
+                    }))
         };
     }
+
 
     // --------------------------------------------------
     // NORMAL / EXPLAIN / OUTSIDE KNOWLEDGE
     // --------------------------------------------------
 
-    const chunks = await searchSimilarChunks(
-        question,
-        intent === "explain" ? 6 : 4
-    );
+    const chunks =
+        await searchSimilarChunks(
+            effectiveQuestion,
+            intent === "explain"
+                ? 6
+                : 4
+        );
+
 
     if (chunks.length === 0) {
+
         return {
             answer:
                 "I couldn't find relevant information in your uploaded documents.",
+
             sources: []
         };
     }
 
-    const context = chunks
-        .map((chunk, index) => {
-            return `
+
+    const context =
+        chunks
+            .map((chunk, index) => {
+
+                return `
 SOURCE ${index + 1}
-DOCUMENT: ${chunk.filename}
-CHUNK: ${chunk.chunk_index}
+
+DOCUMENT:
+${chunk.filename}
+
+CHUNK:
+${chunk.chunk_index}
 
 ${chunk.content}
 `;
-        })
-        .join("\n\n");
+            })
+            .join("\n\n");
+
 
     let prompt;
 
+
+    // --------------------------------------------------
+    // OUTSIDE KNOWLEDGE
+    // --------------------------------------------------
+
     if (intent === "outside") {
+
         prompt = `
 You are Perolt, an AI document assistant.
 
@@ -338,6 +584,7 @@ Use the uploaded document context when it is useful,
 but you may also use your general knowledge.
 
 Clearly distinguish:
+
 - information found in the uploaded document
 - additional general knowledge
 
@@ -349,11 +596,19 @@ ${context}
 
 QUESTION:
 
-${question}
+${effectiveQuestion}
 
 ANSWER:
 `;
-    } else if (intent === "explain") {
+    }
+
+
+    // --------------------------------------------------
+    // EXPLAIN
+    // --------------------------------------------------
+
+    else if (intent === "explain") {
+
         prompt = `
 You are Perolt, an AI document assistant.
 
@@ -364,6 +619,7 @@ Use ONLY the uploaded document context.
 Explain the topic thoroughly and clearly.
 
 Include when relevant:
+
 - definition
 - concept
 - step-by-step explanation
@@ -380,11 +636,19 @@ ${context}
 
 QUESTION:
 
-${question}
+${effectiveQuestion}
 
 DETAILED EXPLANATION:
 `;
-    } else {
+    }
+
+
+    // --------------------------------------------------
+    // NORMAL QUESTION
+    // --------------------------------------------------
+
+    else {
+
         prompt = `
 You are Perolt, a document question-answering assistant.
 
@@ -406,35 +670,72 @@ ${context}
 
 QUESTION:
 
-${question}
+${effectiveQuestion}
 
 ANSWER:
 `;
     }
 
-    console.time("⏱️ Ollama answer");
 
-const answer = await callOllama(
-    prompt,
-    intent === "explain" ? 450 : 250
-);
+    // --------------------------------------------------
+    // GENERATE ANSWER
+    // --------------------------------------------------
 
-console.timeEnd("⏱️ Ollama answer");
+    console.time(
+        "⏱️ Ollama answer"
+    );
+
+
+    const answer =
+        await callOllama(
+            prompt,
+            intent === "explain"
+                ? 450
+                : 250
+        );
+
+
+    console.timeEnd(
+        "⏱️ Ollama answer"
+    );
+
 
     return {
+
         answer,
-        sources: chunks.map((chunk) => ({
-            chunkId: chunk.id,
-            documentId: chunk.document_id,
-            filename: chunk.filename,
-            similarity: chunk.similarity,
-            content: chunk.content
-        }))
+
+        sources:
+            chunks.map(
+                (chunk) => ({
+                    chunkId:
+                        chunk.id,
+
+                    documentId:
+                        chunk.document_id,
+
+                    filename:
+                        chunk.filename,
+
+                    similarity:
+                        chunk.similarity,
+
+                    content:
+                        chunk.content
+                })
+            )
     };
 }
 
+
+// --------------------------------------------------
+// EXPORTS
+// --------------------------------------------------
+
 module.exports = {
+
     answerQuestion,
+
     detectIntent,
+
     summarizeDocument
 };
