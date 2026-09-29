@@ -318,7 +318,10 @@ async function answerQuestion(
     // --------------------------------------------------
 
     let effectiveQuestion =
-        question;
+    question;
+
+let retrievalQuestion =
+    question;
 
 
     const isFollowUp =
@@ -356,17 +359,19 @@ async function answerQuestion(
 
         if (previousUserMessage) {
 
-            effectiveQuestion =
-                `${previousUserMessage.content}
+    effectiveQuestion =
+        `${previousUserMessage.content}
 
 Follow-up request:
 ${question}`;
 
+    retrievalQuestion =
+        previousUserMessage.content;
 
-            console.log(
-                `🧠 Follow-up resolved using previous topic: ${previousUserMessage.content}`
-            );
-        }
+    console.log(
+        `🧠 Follow-up resolved using previous topic: ${previousUserMessage.content}`
+    );
+}
     }
 
 
@@ -526,13 +531,13 @@ ${question}`;
     // NORMAL / EXPLAIN / OUTSIDE KNOWLEDGE
     // --------------------------------------------------
 
-    const chunks =
-        await searchSimilarChunks(
-            effectiveQuestion,
-            intent === "explain"
-                ? 6
-                : 4
-        );
+   const chunks =
+    await searchSimilarChunks(
+        retrievalQuestion,
+        intent === "explain"
+            ? 6
+            : 4
+    );
 
 
     if (chunks.length === 0) {

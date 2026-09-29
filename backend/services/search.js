@@ -83,7 +83,7 @@ async function searchSimilarChunks(query, limit = 5) {
     // Step 2: Retrieve candidate chunks
     // ========================================
 
-    const candidateLimit = Math.max(limit * 3, 15);
+    const candidateLimit = Math.max(limit * 2, 10);
 
     const result = await pool.query(
         `
@@ -117,16 +117,31 @@ const rerankedChunks = await rerankChunks(
 );
 
 console.timeEnd("⏱️ Reranker");
+ 
+// ========================================
+// Step 3.5: Filter weak matches
+// ========================================
 
+const MIN_RERANK_SCORE = -2;
+console.log(
+    "🔎 Reranker scores:",
+    rerankedChunks.map((chunk) => ({
+        score: Number(chunk.rerankScore.toFixed(3)),
+        chunk: chunk.chunk_index
+    }))
+);
+const relevantChunks = rerankedChunks.filter(
+    (chunk) => chunk.rerankScore >= MIN_RERANK_SCORE
+);
 
     // ========================================
     // Step 4: Remove duplicate chunks
     // ========================================
 
     const finalChunks = removeDuplicateChunks(
-        rerankedChunks,
-        limit
-    );
+    relevantChunks,
+    limit
+);
 
 
     // ========================================
