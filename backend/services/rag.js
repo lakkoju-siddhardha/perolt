@@ -68,12 +68,12 @@ function detectIntent(question) {
 
     // Detailed explanation
     if (
-        /explain more|explain further|more detail|in detail|elaborate|expand|give more information|tell me more/i.test(
-            text
-        )
-    ) {
-        return "explain";
-    }
+    /explain more|explain further|more detail|in detail|elaborate|expand|give more information|tell me more/i.test(
+        text
+    )
+) {
+    return "explain";
+}
 
 
     // Outside/general knowledge
@@ -690,8 +690,8 @@ ANSWER:
         await callOllama(
             prompt,
             intent === "explain"
-                ? 450
-                : 250
+                ? 700
+                : 400
         );
 
 

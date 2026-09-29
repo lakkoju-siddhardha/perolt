@@ -1,5 +1,7 @@
 const pool = require("../config/database");
 const { generateEmbedding } = require("./embeddings");
+const { rerankChunks } = require("./reranker");
+
 
 function normalizeText(text) {
     return text
@@ -9,9 +11,15 @@ function normalizeText(text) {
         .trim();
 }
 
+
 function getWordSet(text) {
-    return new Set(normalizeText(text).split(" ").filter(Boolean));
+    return new Set(
+        normalizeText(text)
+            .split(" ")
+            .filter(Boolean)
+    );
 }
+
 
 function calculateOverlap(textA, textB) {
     const wordsA = getWordSet(textA);
@@ -32,10 +40,12 @@ function calculateOverlap(textA, textB) {
     return commonWords / Math.min(wordsA.size, wordsB.size);
 }
 
+
 function removeDuplicateChunks(chunks, limit) {
     const selected = [];
 
     for (const chunk of chunks) {
+
         const isDuplicate = selected.some((existing) => {
             const overlap = calculateOverlap(
                 chunk.content,
@@ -53,22 +63,28 @@ function removeDuplicateChunks(chunks, limit) {
             break;
         }
     }
-console.timeEnd("⏱️ PostgreSQL search");
+
     return selected;
-    
 }
 
+
 async function searchSimilarChunks(query, limit = 5) {
-    console.time("⏱️ Query embedding");
 
-const queryEmbedding = await generateEmbedding(query);
+    // ========================================
+    // Step 1: Generate query embedding
+    // ========================================
 
-console.timeEnd("⏱️ Query embedding");
+    const queryEmbedding = await generateEmbedding(query);
 
     const vector = `[${queryEmbedding.join(",")}]`;
 
+
+    // ========================================
+    // Step 2: Retrieve candidate chunks
+    // ========================================
+
     const candidateLimit = Math.max(limit * 3, 15);
- console.time("⏱️ PostgreSQL search");
+
     const result = await pool.query(
         `
         SELECT
@@ -88,11 +104,38 @@ console.timeEnd("⏱️ Query embedding");
         [vector, candidateLimit]
     );
 
-    return removeDuplicateChunks(
-        result.rows,
+
+    // ========================================
+    // Step 3: Rerank candidates
+    // ========================================
+
+  console.time("⏱️ Reranker");
+
+const rerankedChunks = await rerankChunks(
+    query,
+    result.rows
+);
+
+console.timeEnd("⏱️ Reranker");
+
+
+    // ========================================
+    // Step 4: Remove duplicate chunks
+    // ========================================
+
+    const finalChunks = removeDuplicateChunks(
+        rerankedChunks,
         limit
     );
+
+
+    // ========================================
+    // Step 5: Return best chunks
+    // ========================================
+
+    return finalChunks;
 }
+
 
 module.exports = {
     searchSimilarChunks

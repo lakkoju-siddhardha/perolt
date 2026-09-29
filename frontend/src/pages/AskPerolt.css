@@ -1,8 +1,8 @@
 .ask-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 96px);
-  gap: 18px;
+  height: calc(100vh - 70px);
+  gap: 10px;
 }
 
 .ask-page__title {
